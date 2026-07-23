@@ -16,4 +16,6 @@
  * limitations under the License.
  */
 
-export const RENKU_LOGO = "/static/public/img/eth-logo.svg";
+// Used by the footer (RenkuFooterNavBar) — kept as the Renku logo per DeSciL request.
+// The top navbar uses its own ETH logo (see the local const in features/rootV2/NavbarV2.tsx).
+export const RENKU_LOGO = "/static/public/img/logo.svg";

@@ -19,7 +19,7 @@
 import { SerializedError } from "@reduxjs/toolkit";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import cx from "classnames";
-import { ReactNode, useContext } from "react";
+import { ReactNode } from "react";
 import {
   Eye,
   Folder,
@@ -28,7 +28,6 @@ import {
   PlayCircle,
   PlusLg,
   PlusSquare,
-  Send,
 } from "react-bootstrap-icons";
 import { generatePath, Link } from "react-router";
 import {
@@ -41,8 +40,6 @@ import {
   Row,
 } from "reactstrap";
 
-import AppContext from "~/utils/context/appContext";
-import { DEFAULT_APP_PARAMS } from "~/utils/context/appParams.constants";
 import RtkOrDataServicesError from "../../components/errors/RtkOrDataServicesError";
 import { Loader } from "../../components/Loader";
 import {
@@ -96,7 +93,6 @@ export default function DashboardV2() {
               <SessionsDashboard />
               <JobsDashboard />
               <ProjectsDashboard />
-              <FooterDashboard />
             </Col>
           </Row>
         </div>
@@ -119,25 +115,6 @@ function HeaderDashboard() {
         <h1 className="visually-hidden">Renku Dashboard</h1>
       </div>
     </div>
-  );
-}
-
-function FooterDashboard() {
-  const { params } = useContext(AppContext);
-  const renkuContactEmail =
-    params?.CONTACT_EMAIL ?? DEFAULT_APP_PARAMS.CONTACT_EMAIL;
-  return (
-    // DeSciL: trimmed the SDSC-community cards (Renku updates blog, Documentation,
-    // Community events notion) — not relevant to the D-GESS instance. Kept Contact us
-    // (points at CONTACT_EMAIL). Adjust the card set here as needed.
-    <Row className="g-3">
-      <Col xs={12} lg={6} xl={3}>
-        <FooterDashboardCard url={`mailto:${renkuContactEmail}`}>
-          <Send fontSize={27} />
-          Contact us
-        </FooterDashboardCard>
-      </Col>
-    </Row>
   );
 }
 

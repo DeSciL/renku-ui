@@ -32,15 +32,7 @@ import { DEFAULT_APP_PARAMS } from "../../utils/context/appParams.constants";
 import type { AnonymousHomeConfig } from "./anonymousHome.types";
 import VisualHead from "./assets/Visual_Head.svg";
 import { BottomNav, TopNav } from "./components/anonymousHomeNav";
-import { RenkuBenefits } from "./components/Benefits/Benefits";
-import DividerLandingPage from "./components/Dividier/Divider";
-import { GetStarted } from "./components/GetStarted/GetStarted";
 import HeroLanding from "./components/HeroLanding/HeroLanding";
-import { Introduction } from "./components/Introduction/Introduction";
-import { RenkuUsers } from "./components/RenkuUsers/RenkuUsers";
-import { ResourcesAndSupport } from "./components/ResourcesSupport/ResourcesAndSupport";
-import WhatIsRenku from "./components/WhatIsRenku/WhatIsRenku";
-import WhoWeAre from "./components/WhoWeAre/WhoWeAre";
 
 export default function AnonymousHome() {
   const { params } = useContext(AppContext);
@@ -61,17 +53,10 @@ export function HomeHeader() {
 }
 
 function StandardHome() {
+  // DeSciL: trimmed the SDSC/Renku marketing sections — minimal landing = hero + footer nav.
   return (
     <>
       <HeroLanding />
-      <Introduction />
-      <WhatIsRenku />
-      <GetStarted />
-      <RenkuUsers />
-      <DividerLandingPage />
-      <RenkuBenefits />
-      <ResourcesAndSupport />
-      <WhoWeAre />
       <BottomNav />
     </>
   );

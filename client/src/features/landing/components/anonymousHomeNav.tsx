@@ -36,7 +36,7 @@ import { useLoginUrl } from "../../../authentication/useLoginUrl.hook";
 import { ExternalLink } from "../../../components/LegacyExternalLinks.js";
 import { Links } from "../../../utils/constants/Docs.js";
 
-const logo = "/static/public/img/logo.svg";
+const logo = "/static/public/img/eth-logo.svg";
 
 type BottomNavExternalLinkProps = {
   title: string;

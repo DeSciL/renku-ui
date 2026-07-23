@@ -21,12 +21,9 @@ import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import cx from "classnames";
 import { ReactNode, useContext } from "react";
 import {
-  Calendar3Week,
   Eye,
-  FileEarmarkText,
   Folder,
   Gear,
-  Megaphone,
   People,
   PlayCircle,
   PlusLg,
@@ -44,7 +41,6 @@ import {
   Row,
 } from "reactstrap";
 
-import { NEW_DOCS_DOCUMENTATION } from "~/utils/constants/NewDocs";
 import AppContext from "~/utils/context/appContext";
 import { DEFAULT_APP_PARAMS } from "~/utils/context/appParams.constants";
 import RtkOrDataServicesError from "../../components/errors/RtkOrDataServicesError";
@@ -131,25 +127,10 @@ function FooterDashboard() {
   const renkuContactEmail =
     params?.CONTACT_EMAIL ?? DEFAULT_APP_PARAMS.CONTACT_EMAIL;
   return (
+    // DeSciL: trimmed the SDSC-community cards (Renku updates blog, Documentation,
+    // Community events notion) — not relevant to the D-GESS instance. Kept Contact us
+    // (points at CONTACT_EMAIL). Adjust the card set here as needed.
     <Row className="g-3">
-      <Col xs={12} lg={6} xl={3}>
-        <FooterDashboardCard url="https://blog.renkulab.io/">
-          <Megaphone fontSize={27} />
-          Renku updates
-        </FooterDashboardCard>
-      </Col>
-      <Col xs={12} lg={6} xl={3}>
-        <FooterDashboardCard url={NEW_DOCS_DOCUMENTATION}>
-          <FileEarmarkText fontSize={27} />
-          Documentation
-        </FooterDashboardCard>
-      </Col>
-      <Col xs={12} lg={6} xl={3}>
-        <FooterDashboardCard url="https://renku.notion.site/f9caf41b579f474b8007803b007e3999?v=807326f870984774900fd87095225d7a">
-          <Calendar3Week fontSize={27} />
-          Community events
-        </FooterDashboardCard>
-      </Col>
       <Col xs={12} lg={6} xl={3}>
         <FooterDashboardCard url={`mailto:${renkuContactEmail}`}>
           <Send fontSize={27} />

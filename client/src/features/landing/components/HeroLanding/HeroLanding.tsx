@@ -19,8 +19,7 @@ export default function HeroLanding() {
           <Col xs={12} lg={7}>
             <div className={cx("pe-0", "pe-lg-5")}>
               <h1 className="text-white">
-                Connecting data, code, compute, and{" "}
-                <span className="fst-italic">people</span>.
+                DeSciL <span className="fst-italic">RenkuLab</span>.
               </h1>
               <img
                 src={heroGraphic}
@@ -28,8 +27,8 @@ export default function HeroLanding() {
                 className={cx("w-100", "d-block", "d-lg-none", "my-4")}
               />
               <p className={cx("fs-2", "text-white", "my-4")}>
-                One seamless platform powering collaboration in your project,
-                team, and community.
+                Reproducible, collaborative data science for the research
+                groups of ETH Zürich D-GESS.
               </p>
               <div
                 className={cx(

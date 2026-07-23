@@ -16,4 +16,4 @@
  * limitations under the License.
  */
 
-export const RENKU_LOGO = "/static/public/img/logo.svg";
+export const RENKU_LOGO = "/static/public/img/eth-logo.svg";

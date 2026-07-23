@@ -49,7 +49,7 @@ import StatusBanner from "../platform/components/StatusBanner";
 import { PROJECT_CREATION_HASH } from "../projectsV2/new/createProjectV2.constants";
 import { useGetUserQueryState } from "../usersV2/api/users.api";
 
-const RENKU_LOGO = "/static/public/img/logo.svg";
+const RENKU_LOGO = "/static/public/img/eth-logo.svg";
 
 function NavbarItemPlus() {
   const [isOpen, setIsOpen] = useState(false);

@@ -62,7 +62,7 @@ function RenkuFooterNavBarInner() {
       <div className={cx("flex-nowrap", "navbar", "px-2", "px-sm-3", "py-2")}>
         <div className="navbar-nav">
           <span className="text-white">
-            &copy; SDSC {new Date().getFullYear()}
+            &copy; DeSciL · ETH Zürich D-GESS {new Date().getFullYear()}
           </span>
         </div>
         <div className="navbar-nav" data-cy="version-info">

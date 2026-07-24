@@ -95,7 +95,10 @@ function CustomizedAnonymousHome(props: AnonymousHomeConfig) {
 
 function AnonymousHomeInner(props: AnonymousHomeConfig) {
   return (
-    <div id="rk-anon-home-frame">
+    <div
+      id="rk-anon-home-frame"
+      className="bg-navy min-vh-100 d-flex flex-column"
+    >
       {props.homeCustomized.custom.enabled ? (
         <CustomizedAnonymousHome {...props} />
       ) : (

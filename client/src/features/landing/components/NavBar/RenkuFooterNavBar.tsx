@@ -56,7 +56,7 @@ function RenkuFooterNavBarInner() {
 
   return (
     <footer className={cx("text-body", "bg-body")} data-bs-theme="navy">
-      <div className={cx("flex-nowrap", "navbar", "px-2", "px-sm-3", "py-2")}>
+      <div className={cx("flex-nowrap", "navbar", "container", "py-2")}>
         <div className="navbar-nav">
           <span className="text-white">
             &copy; {new Date().getFullYear()} Swiss Data Science Center
@@ -67,7 +67,7 @@ function RenkuFooterNavBarInner() {
             className={cx("d-flex", "ms-auto", "ms-lg-0", "nav-link", "p-0")}
             to={releaseLocation}
           >
-            <img src={RENKU_LOGO} alt="Renku" height={44} />
+            <img src={RENKU_LOGO} alt="Renku" height={32} />
             <span className={cx("my-auto", "ps-3")}>{displayVersion}</span>
           </Link>
         </div>

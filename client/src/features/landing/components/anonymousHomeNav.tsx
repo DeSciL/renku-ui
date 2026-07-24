@@ -96,7 +96,7 @@ function BottomNav() {
     params?.TERMS_PAGES_ENABLED ?? DEFAULT_APP_PARAMS.TERMS_PAGES_ENABLED;
 
   return (
-    <div id="rk-anon-home-bottom-nav" className={cx("bg-navy")}>
+    <div id="rk-anon-home-bottom-nav" className={cx("bg-navy", "mt-auto")}>
       <div className={cx("container", "py-5", "text-white")}>
         <Row>
           <Col md={3}>
@@ -144,10 +144,6 @@ function BottomNav() {
               <BottomNavExternalLink
                 title="Why Renku?"
                 url={NEW_DOCS_HOW_RENKU_WORKS}
-              />
-              <BottomNavExternalLink
-                title="Who we are?"
-                url={`${Links.HOMEPAGE}/who-we-are/`}
               />
             </BottomNavSection>
           </Col>

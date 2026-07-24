@@ -1,15 +1,12 @@
 import cx from "classnames";
-import { Link } from "react-router";
 import { Col, Row } from "reactstrap";
 
 import { useLoginUrl } from "../../../../authentication/useLoginUrl.hook";
 import { HomeHeader } from "../../AnonymousHome";
 import heroGraphic from "../../assets/heroBoxes.svg";
-import { useCustomHomePageProjectUrl } from "../../hooks/useCustomHomePageProjectUrl.hook";
 
 export default function HeroLanding() {
   const loginUrl = useLoginUrl();
-  const projectUrl = useCustomHomePageProjectUrl();
 
   return (
     <div id="rk-anon-home-hero" className="bg-navy">
@@ -18,8 +15,17 @@ export default function HeroLanding() {
         <Row>
           <Col xs={12} lg={7}>
             <div className={cx("pe-0", "pe-lg-5")}>
-              <h1 className="text-white">
-                DeSciL <span className="fst-italic">RenkuLab</span>.
+              <h1
+                className={cx(
+                  "text-white",
+                  "d-flex",
+                  "align-items-center",
+                  "gap-3",
+                  "flex-wrap",
+                )}
+              >
+                DeSciL RenkuLab
+                <img src="/static/public/img/logo.svg" alt="Renku" height={44} />
               </h1>
               <img
                 src={heroGraphic}
@@ -49,14 +55,6 @@ export default function HeroLanding() {
                 >
                   Create an account
                 </a>
-                <Link
-                  className={cx("btn", "btn-outline-light", "btn-lg")}
-                  to={projectUrl}
-                  data-cy={`explore-a-project-hero-btn`}
-                  target="_blank"
-                >
-                  Explore a project
-                </Link>
               </div>
             </div>
           </Col>

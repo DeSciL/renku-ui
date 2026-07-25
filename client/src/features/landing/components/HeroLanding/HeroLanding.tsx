@@ -16,16 +16,16 @@ export default function HeroLanding() {
           <Col xs={12} lg={7}>
             <div className={cx("pe-0", "pe-lg-5")}>
               <h1
-                className={cx(
-                  "text-white",
-                  "d-flex",
-                  "align-items-center",
-                  "gap-3",
-                  "flex-wrap",
-                )}
+                className={cx("text-white", "d-flex", "align-items-center", "gap-2")}
               >
-                DeSciL RenkuLab
-                <img src="/static/public/img/logo.svg" alt="Renku" height={44} />
+                DeSciL
+                {/* Logo sized in em so its "renku" lowercase ≈ the "c" x-height of the
+                    title; tweak the multiplier if it reads slightly big/small. */}
+                <img
+                  src="/static/public/img/logo.svg"
+                  alt="Renku"
+                  style={{ height: "0.9em" }}
+                />
               </h1>
               <img
                 src={heroGraphic}

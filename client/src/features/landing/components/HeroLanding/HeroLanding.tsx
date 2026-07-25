@@ -19,12 +19,13 @@ export default function HeroLanding() {
                 className={cx("text-white", "d-flex", "align-items-center", "gap-2")}
               >
                 DeSciL
-                {/* Logo sized in em so its "renku" lowercase ≈ the "c" x-height of the
-                    title; tweak the multiplier if it reads slightly big/small. */}
+                {/* Logo sized in em so its "renku" lowercase ≈ the title letters.
+                    The wordmark is a small fraction of the SVG box, so this runs large;
+                    tweak the multiplier if it reads slightly big/small. */}
                 <img
                   src="/static/public/img/logo.svg"
                   alt="Renku"
-                  style={{ height: "0.9em" }}
+                  style={{ height: "1.8em" }}
                 />
               </h1>
               <img

@@ -119,13 +119,15 @@ function InnerApp({
   }
 
   return (
-    <>
+    // Sticky-footer layout: fill the viewport, content grows, footer pinned after it
+    // (no viewport gap → no white strip under the footer, footer always visible).
+    <div className="d-flex flex-column min-vh-100">
       <LoggedOutPrompt />
       <NavbarV2 />
-      {children}
+      <div className="d-flex flex-column flex-grow-1">{children}</div>
       <RenkuFooterNavBar />
       <Cookie />
-    </>
+    </div>
   );
 }
 

@@ -97,10 +97,7 @@ function AnonymousHomeInner(props: AnonymousHomeConfig) {
   return (
     <div
       id="rk-anon-home-frame"
-      className="bg-navy d-flex flex-column"
-      // Fill the viewport minus the global footer (RenkuFooterNavBar, ~3.5rem) so the
-      // copyright bar stays visible instead of overflowing ~50px below the fold.
-      style={{ minHeight: "calc(100vh - 3.5rem)" }}
+      className="bg-navy d-flex flex-column flex-grow-1"
     >
       {props.homeCustomized.custom.enabled ? (
         <CustomizedAnonymousHome {...props} />

@@ -23,7 +23,7 @@
  *  Presentational components.
  */
 
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { Col, Row } from "reactstrap";
 
 import LazyMarkdown from "~/components/markdown/LazyMarkdown";
@@ -36,6 +36,16 @@ import HeroLanding from "./components/HeroLanding/HeroLanding";
 
 export default function AnonymousHome() {
   const { params } = useContext(AppContext);
+
+  // DeSciL: paint the page background navy while on the landing so no white can show
+  // through any residual gap (e.g. below the footer). Restored on unmount.
+  useEffect(() => {
+    const prev = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = "#01192d";
+    return () => {
+      document.body.style.backgroundColor = prev;
+    };
+  }, []);
 
   return (
     <AnonymousHomeInner
@@ -97,7 +107,10 @@ function AnonymousHomeInner(props: AnonymousHomeConfig) {
   return (
     <div
       id="rk-anon-home-frame"
-      className="bg-navy d-flex flex-column flex-grow-1"
+      className="bg-navy d-flex flex-column"
+      // Fill the viewport minus the ~3rem global footer so the copyright bar is visible
+      // without scrolling; the navy body background (set above) covers any residual gap.
+      style={{ minHeight: "calc(100vh - 3rem)" }}
     >
       {props.homeCustomized.custom.enabled ? (
         <CustomizedAnonymousHome {...props} />

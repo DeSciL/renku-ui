@@ -121,9 +121,17 @@ function InnerApp({
   return (
     <>
       <LoggedOutPrompt />
-      <NavbarV2 />
-      {children}
-      <RenkuFooterNavBar />
+      {/* DeSciL: sticky footer. The page column is at least one viewport tall and the
+          route content absorbs the slack, so the copyright bar always lands on the fold
+          instead of being pushed past it. Using flex-grow for the slack means we never
+          hard-code the nav/footer heights: the landing frame used to subtract only the
+          3rem copyright bar from the viewport, ignoring the ~112px home nav, which is
+          exactly what pushed the footer out of view. */}
+      <div className="min-vh-100 d-flex flex-column">
+        <NavbarV2 />
+        <div className="d-flex flex-column flex-grow-1">{children}</div>
+        <RenkuFooterNavBar />
+      </div>
       <Cookie />
     </>
   );

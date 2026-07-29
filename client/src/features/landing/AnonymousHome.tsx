@@ -101,10 +101,12 @@ function AnonymousHomeInner(props: AnonymousHomeConfig) {
   return (
     <div
       id="rk-anon-home-frame"
-      className="bg-navy d-flex flex-column"
-      // Fill the viewport minus the ~3rem global footer so the copyright bar is visible
-      // without scrolling; the navy body background (set above) covers any residual gap.
-      style={{ minHeight: "calc(100vh - 3rem)" }}
+      // DeSciL: no min-height here — the frame just takes the slack that AppRoot's flex
+      // column hands down (viewport minus home nav minus copyright bar). The previous
+      // fixed min-height subtracted only the 3rem copyright bar, not the ~112px home nav,
+      // and pushed the footer out of view. Hero grows and centers inside; BottomNav stays
+      // pinned to the bottom by its own `mt-auto`.
+      className="bg-navy d-flex flex-column flex-grow-1"
     >
       {props.homeCustomized.custom.enabled ? (
         <CustomizedAnonymousHome {...props} />

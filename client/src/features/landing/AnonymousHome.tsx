@@ -24,7 +24,6 @@
  */
 
 import { useContext, useEffect } from "react";
-import { Col, Row } from "reactstrap";
 
 import LazyMarkdown from "~/components/markdown/LazyMarkdown";
 import AppContext from "../../utils/context/appContext";
@@ -83,23 +82,18 @@ function CustomizedAnonymousHome(props: AnonymousHomeConfig) {
     backgroundSize = "cover";
   }
   return (
-    <div
-      id="rk-anon-home-section1"
-      style={{
-        backgroundImage: `url(${backgroundUrl})`,
-        backgroundSize,
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <HomeHeader />
-      <div className="rk-anon-home-section-content">
-        <Row>
-          <Col className="rk-pt-l rk-w-s">
-            <LazyMarkdown>{content}</LazyMarkdown>
-          </Col>
-        </Row>
+    <>
+      <div
+        style={{
+          backgroundImage: `url(${backgroundUrl})`,
+          backgroundSize,
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        <LazyMarkdown sanitize={false}>{content}</LazyMarkdown>
       </div>
-    </div>
+      <BottomNav />
+    </>
   );
 }
 

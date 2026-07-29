@@ -2,7 +2,6 @@ import cx from "classnames";
 import { Col, Row } from "reactstrap";
 
 import { useLoginUrl } from "../../../../authentication/useLoginUrl.hook";
-import { HomeHeader } from "../../AnonymousHome";
 import heroGraphic from "../../assets/heroBoxes.svg";
 
 export default function HeroLanding() {
@@ -10,7 +9,6 @@ export default function HeroLanding() {
 
   return (
     <div id="rk-anon-home-hero" className="bg-navy">
-      <HomeHeader />
       <div className={cx("container", "py-5", "px-3")}>
         <Row>
           <Col xs={12} lg={7}>

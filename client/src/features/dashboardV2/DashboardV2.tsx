@@ -19,19 +19,15 @@
 import { SerializedError } from "@reduxjs/toolkit";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import cx from "classnames";
-import { ReactNode, useContext } from "react";
+import { ReactNode } from "react";
 import {
-  Calendar3Week,
   Eye,
-  FileEarmarkText,
   Folder,
   Gear,
-  Megaphone,
   People,
   PlayCircle,
   PlusLg,
   PlusSquare,
-  Send,
 } from "react-bootstrap-icons";
 import { generatePath, Link } from "react-router";
 import {
@@ -44,9 +40,6 @@ import {
   Row,
 } from "reactstrap";
 
-import { NEW_DOCS_DOCUMENTATION } from "~/utils/constants/NewDocs";
-import AppContext from "~/utils/context/appContext";
-import { DEFAULT_APP_PARAMS } from "~/utils/context/appParams.constants";
 import RtkOrDataServicesError from "../../components/errors/RtkOrDataServicesError";
 import { Loader } from "../../components/Loader";
 import {
@@ -100,7 +93,6 @@ export default function DashboardV2() {
               <SessionsDashboard />
               <JobsDashboard />
               <ProjectsDashboard />
-              <FooterDashboard />
             </Col>
           </Row>
         </div>
@@ -123,40 +115,6 @@ function HeaderDashboard() {
         <h1 className="visually-hidden">Renku Dashboard</h1>
       </div>
     </div>
-  );
-}
-
-function FooterDashboard() {
-  const { params } = useContext(AppContext);
-  const renkuContactEmail =
-    params?.CONTACT_EMAIL ?? DEFAULT_APP_PARAMS.CONTACT_EMAIL;
-  return (
-    <Row className="g-3">
-      <Col xs={12} lg={6} xl={3}>
-        <FooterDashboardCard url="https://blog.renkulab.io/">
-          <Megaphone fontSize={27} />
-          Renku updates
-        </FooterDashboardCard>
-      </Col>
-      <Col xs={12} lg={6} xl={3}>
-        <FooterDashboardCard url={NEW_DOCS_DOCUMENTATION}>
-          <FileEarmarkText fontSize={27} />
-          Documentation
-        </FooterDashboardCard>
-      </Col>
-      <Col xs={12} lg={6} xl={3}>
-        <FooterDashboardCard url="https://renku.notion.site/f9caf41b579f474b8007803b007e3999?v=807326f870984774900fd87095225d7a">
-          <Calendar3Week fontSize={27} />
-          Community events
-        </FooterDashboardCard>
-      </Col>
-      <Col xs={12} lg={6} xl={3}>
-        <FooterDashboardCard url={`mailto:${renkuContactEmail}`}>
-          <Send fontSize={27} />
-          Contact us
-        </FooterDashboardCard>
-      </Col>
-    </Row>
   );
 }
 

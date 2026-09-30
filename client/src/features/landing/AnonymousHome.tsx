@@ -23,7 +23,7 @@
  *  Presentational components.
  */
 
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 
 import LazyMarkdown from "~/components/markdown/LazyMarkdown";
 import AppContext from "../../utils/context/appContext";
@@ -31,18 +31,20 @@ import { DEFAULT_APP_PARAMS } from "../../utils/context/appParams.constants";
 import type { AnonymousHomeConfig } from "./anonymousHome.types";
 import VisualHead from "./assets/Visual_Head.svg";
 import { BottomNav, TopNav } from "./components/anonymousHomeNav";
-import { RenkuBenefits } from "./components/Benefits/Benefits";
-import DividerLandingPage from "./components/Dividier/Divider";
-import { GetStarted } from "./components/GetStarted/GetStarted";
 import HeroLanding from "./components/HeroLanding/HeroLanding";
-import { Introduction } from "./components/Introduction/Introduction";
-import { RenkuUsers } from "./components/RenkuUsers/RenkuUsers";
-import { ResourcesAndSupport } from "./components/ResourcesSupport/ResourcesAndSupport";
-import WhatIsRenku from "./components/WhatIsRenku/WhatIsRenku";
-import WhoWeAre from "./components/WhoWeAre/WhoWeAre";
 
 export default function AnonymousHome() {
   const { params } = useContext(AppContext);
+
+  // DeSciL: paint the page background navy while on the landing so no white can show
+  // through any residual gap (e.g. below the footer). Restored on unmount.
+  useEffect(() => {
+    const prev = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = "#01192d";
+    return () => {
+      document.body.style.backgroundColor = prev;
+    };
+  }, []);
 
   return (
     <AnonymousHomeInner
@@ -60,17 +62,10 @@ export function HomeHeader() {
 }
 
 function StandardHome() {
+  // DeSciL: trimmed the SDSC/Renku marketing sections — minimal landing = hero + footer nav.
   return (
     <>
       <HeroLanding />
-      <Introduction />
-      <WhatIsRenku />
-      <GetStarted />
-      <RenkuUsers />
-      <DividerLandingPage />
-      <RenkuBenefits />
-      <ResourcesAndSupport />
-      <WhoWeAre />
       <BottomNav />
     </>
   );
@@ -104,7 +99,15 @@ function CustomizedAnonymousHome(props: AnonymousHomeConfig) {
 
 function AnonymousHomeInner(props: AnonymousHomeConfig) {
   return (
-    <div id="rk-anon-home-frame">
+    <div
+      id="rk-anon-home-frame"
+      // DeSciL: no min-height here — the frame just takes the slack that AppRoot's flex
+      // column hands down (viewport minus home nav minus copyright bar). The previous
+      // fixed min-height subtracted only the 3rem copyright bar, not the ~112px home nav,
+      // and pushed the footer out of view. Hero grows and centers inside; BottomNav stays
+      // pinned to the bottom by its own `mt-auto`.
+      className="bg-navy d-flex flex-column flex-grow-1"
+    >
       {props.homeCustomized.custom.enabled ? (
         <CustomizedAnonymousHome {...props} />
       ) : (

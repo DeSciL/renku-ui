@@ -97,7 +97,7 @@ function BottomNav() {
 
   return (
     <div id="rk-anon-home-bottom-nav" className={cx("bg-navy", "mt-auto")}>
-      <div className={cx("container", "py-5", "text-white")}>
+      <div className={cx("container", "pt-5", "pb-3", "text-white")}>
         <Row>
           <Col md={3}>
             <BottomNavSection sectionTitle="Learn">

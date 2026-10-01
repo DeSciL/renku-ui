@@ -15,10 +15,10 @@ import heroGraphic from "../../assets/heroBoxes.svg";
  * The wordmark is only ~31% of the box height (the rest is the pixel-cross motif, which
  * runs the full height and bleeds above/below the text), hence the >3x multiplier.
  *   height       =  1ex * 160.71/49.52          -> renku x-height == font x-height
- *   marginBottom = -(1 - 123.69/160.71) * scale -> renku baseline == text baseline
+ *   verticalAlign = -(1 - 123.69/160.71) * scale -> renku baseline == text baseline
  * `1ex` IS the font's x-height, so this carries no Inter-specific magic numbers and
- * survives a font change. The negative bottom margin (rather than position/top) keeps the
- * drop honest in layout, so the logo can't overlap the tagline below.
+ * survives a font change. vertical-align (rather than position/top) keeps the drop honest
+ * in layout: the line box grows, so the logo can't overlap the tagline below.
  */
 const LOGO_VB_HEIGHT = 160.71;
 const LOGO_BASELINE = 123.69;
@@ -41,21 +41,19 @@ export default function HeroLanding() {
         <Row>
           <Col xs={12} lg={7}>
             <div className={cx("pe-0", "pe-lg-5")}>
-              <h1
-                className={cx(
-                  "text-white",
-                  "d-flex",
-                  "align-items-baseline",
-                  "gap-2",
-                )}
-              >
+              {/* Inline, not flex: a flex item's baseline is synthesized from the img's
+                  border box, so a negative margin can't lower it (the logo sat 0.75ex
+                  high). Inline, vertical-align moves the img's bottom edge below the
+                  text baseline by exactly the logo's below-baseline share. */}
+              <h1 className="text-white">
                 DeSciL
                 <img
                   src="/static/public/img/logo.svg"
                   alt="renku"
+                  className="ms-2"
                   style={{
                     height: `calc(1ex * ${LOGO_SCALE.toFixed(4)})`,
-                    marginBottom: `calc(-1ex * ${LOGO_BELOW_BASELINE.toFixed(4)})`,
+                    verticalAlign: `calc(-1ex * ${LOGO_BELOW_BASELINE.toFixed(4)})`,
                   }}
                 />
               </h1>
@@ -78,14 +76,14 @@ export default function HeroLanding() {
                   "flex-column",
                 )}
               >
+                {/* DeSciL: accounts are not self-service via Renku, so this is a plain
+                    login (same tab, like the navbar's Login), not "Create an account". */}
                 <a
                   className={cx("btn", "btn-primary", "btn-lg")}
-                  id="hero_link-sign_up"
+                  id="hero_link-login"
                   href={loginUrl.href}
-                  target="_blank"
-                  rel="noreferrer noopener"
                 >
-                  Create an account
+                  Login
                 </a>
               </div>
             </div>

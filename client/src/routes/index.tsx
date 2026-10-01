@@ -26,8 +26,10 @@ export default function IndexPage() {
     );
   }
 
+  // DeSciL: flex column so the landing frame's flex-grow-1 actually receives AppRoot's
+  // slack; with a plain block wrapper the slack collected below the footer links.
   return (
-    <div className="w-100">
+    <div className={cx("w-100", "d-flex", "flex-column", "flex-grow-1")}>
       <LazyAnonymousHome />
     </div>
   );

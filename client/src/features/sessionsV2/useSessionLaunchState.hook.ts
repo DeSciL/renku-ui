@@ -26,7 +26,10 @@ import { useGetResourcePoolsQuery } from "./api/computeResources.api";
 import type { SessionLauncher } from "./api/sessionLaunchersV2.api";
 import { useGetSessionsImagesQuery } from "./api/sessionsV2.api";
 import { DEFAULT_URL } from "./session.constants";
-import { repositoriesNeedAttention } from "./sessionLaunchValidation.utils";
+import {
+  repositoriesNeedAttention,
+  sshKeyNeedsAttention,
+} from "./sessionLaunchValidation.utils";
 import startSessionOptionsV2Slice from "./startSessionOptionsV2.slice";
 import useSessionLaunchPrerequisites from "./useSessionLaunchPrerequisites.hook";
 import useSessionResourceClass from "./useSessionResourceClass.hook";
@@ -51,10 +54,15 @@ export default function useSessionLauncherState({
     isFetchingOrLoadingDataConnectors: isFetchingOrLoadingStorages,
     isFetchingRepositories,
     isFetchingSessionSecrets,
+    isLauncherResourcesError,
+    isFetchingSshKeys,
     isReadyDataConnectorConfigs,
+    launcherResourcesError,
     repositories,
     sessionSecretSlotsWithSecrets,
+    sshKeys,
   } = useSessionLaunchPrerequisites({
+    launcherId: launcher.id,
     project,
     autoMarkSecretsReady: true,
   });
@@ -127,6 +135,7 @@ export default function useSessionLauncherState({
 
   useEffect(() => {
     if (
+      !isLauncherResourcesError &&
       !isFetchingOrLoadingStorages &&
       initialDataConnectorConfigs &&
       isReadyDataConnectorConfigs
@@ -141,19 +150,29 @@ export default function useSessionLauncherState({
     dispatch,
     initialDataConnectorConfigs,
     isFetchingOrLoadingStorages,
+    isLauncherResourcesError,
     isReadyDataConnectorConfigs,
   ]);
 
   // Check for expired data connectors -- it should block only if any connector has expired
   useEffect(() => {
-    if (!isFetchingOrLoadingStorages && !hasExpiredDataConnectors) {
+    if (
+      !isLauncherResourcesError &&
+      !isFetchingOrLoadingStorages &&
+      !hasExpiredDataConnectors
+    ) {
       dispatch(
         startSessionOptionsV2Slice.actions.setDataConnectorsExpirationReady(
           true,
         ),
       );
     }
-  }, [dispatch, hasExpiredDataConnectors, isFetchingOrLoadingStorages]);
+  }, [
+    dispatch,
+    hasExpiredDataConnectors,
+    isFetchingOrLoadingStorages,
+    isLauncherResourcesError,
+  ]);
 
   // check session image availability -- it should block only for external images
   useEffect(() => {
@@ -176,6 +195,13 @@ export default function useSessionLauncherState({
     }
   }, [dispatch, hasWritePermission, isFetchingRepositories, repositories]);
 
+  // Check for an SSH key -- only block if the frontend requires it
+  useEffect(() => {
+    if (!isFetchingSshKeys && !sshKeyNeedsAttention(launcher, sshKeys)) {
+      dispatch(startSessionOptionsV2Slice.actions.setSshKeysReady(true));
+    }
+  }, [dispatch, isFetchingSshKeys, launcher, sshKeys]);
+
   return {
     containerImage,
     sessionImage,
@@ -183,7 +209,10 @@ export default function useSessionLauncherState({
     isFetchingOrLoadingStorages,
     isFetchingRepositories,
     isFetchingSessionSecrets,
+    isLauncherResourcesError,
+    isFetchingSshKeys,
     isLoadingSessionImage,
+    launcherResourcesError,
     isPendingResourceClass,
     repositories,
     resourcePools,

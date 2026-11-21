@@ -1,0 +1,930 @@
+/*!
+ * Copyright 2023 - Swiss Data Science Center (SDSC)
+ * A partnership between École Polytechnique Fédérale de Lausanne (EPFL) and
+ * Eidgenössische Technische Hochschule Zürich (ETHZ).
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import cx from "classnames";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  CheckLg,
+  Cpu,
+  FolderFill,
+  PeopleFill,
+  PersonFill,
+  PersonFillX,
+  Tags,
+  TrashFill,
+  XLg,
+} from "react-bootstrap-icons";
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Collapse,
+  Modal,
+  ModalBody,
+  ModalFooter,
+} from "reactstrap";
+
+import { ErrorAlert, InfoAlert } from "~/components/Alert";
+import RtkOrDataServicesError from "~/components/errors/RtkOrDataServicesError";
+import ExternalLink from "~/components/ExternalLink";
+import ChevronFlippedIcon from "~/components/icons/ChevronFlippedIcon";
+import { Loader } from "~/components/Loader";
+import { NEW_DOCS_ADMIN_OPERATIONS_RPS } from "~/utils/constants/NewDocs";
+import AppContext from "~/utils/context/appContext";
+import { DEFAULT_APP_PARAMS } from "~/utils/context/appParams.constants";
+import { toFullHumanDuration } from "~/utils/helpers/DurationUtils";
+import { useGetResourcePoolsByResourcePoolIdLimitsQuery } from "../resourceUsage/api/resourceUsage.api";
+import UpdateResourceClassCostButton from "../resourceUsage/UpdateResourceClassCostButton";
+import UpdateResourcePoolUsageLimitsButton from "../resourceUsage/UpdateResourcePoolUsageLimitsButton";
+import {
+  useDeleteResourcePoolsByResourcePoolIdMembersAndMemberTypeMemberIdMutation,
+  useDeleteResourcePoolsByResourcePoolIdMutation,
+  useGetResourceFlavorsQuery,
+  useGetResourcePoolsByResourcePoolIdMembersQuery,
+  useGetResourcePoolsQuery,
+  type PoolMemberResponse,
+  type ResourceClassWithId,
+  type ResourcePoolWithId,
+  type ResourcePoolWithIdFiltered,
+} from "../sessionsV2/api/computeResources.api";
+import AddMemberToResourcePoolButton from "./AddMemberToResourcePoolButton";
+import AddResourceClassButton from "./AddResourceClassButton";
+import AddResourcePoolButton from "./AddResourcePoolButton";
+import { poolRequiresIntegerCpu } from "./adminComputeResources.utils";
+import { useGetKeycloakUserQuery } from "./adminKeycloak.api";
+import AdminListFilter from "./AdminListFilter";
+import AdminSectionHeader from "./AdminSectionHeader";
+import DeleteResourceClassButton from "./DeleteResourceClassButton";
+import ResourceFlavorsSection from "./ResourceFlavorsSection";
+import UpdateResourceClassButton from "./UpdateResourceClassButton";
+import UpdateResourcePoolQuotaButton from "./UpdateResourcePoolQuotaButton";
+import UpdateResourcePoolRemoteButton from "./UpdateResourcePoolRemoteButton";
+import UpdateResourcePoolThresholdsButton from "./UpdateResourcePoolThresholdsButton";
+import useKeycloakRealm from "./useKeycloakRealm.hook";
+
+export default function ComputeResourcesSection() {
+  const { data, error, isLoading } = useGetResourcePoolsQuery({});
+
+  return (
+    <>
+      <section>
+        <AdminSectionHeader
+          action={<AddResourcePoolButton />}
+          count={!isLoading && !error ? data?.length : undefined}
+          icon={Cpu}
+          title="Resource pools"
+        />
+
+        <p className="mb-2">
+          Resource pools allow you to manage and allocate compute resources for
+          different groups and users.
+        </p>
+        <p className="mb-4">
+          Check out the{" "}
+          <ExternalLink href={NEW_DOCS_ADMIN_OPERATIONS_RPS}>
+            documentation for resource pools
+          </ExternalLink>
+          .
+        </p>
+
+        <div className="mb-4">
+          <ResourcePoolsList />
+        </div>
+      </section>
+      <ResourceFlavorsSection />
+    </>
+  );
+}
+
+function ResourcePoolsList() {
+  const { data, error, isLoading } = useGetResourcePoolsQuery({});
+
+  const [filter, setFilter] = useState("");
+
+  const filteredPools = useMemo(() => {
+    if (!data || !filter) return data;
+    const lowerCaseFilter = filter.toLowerCase();
+    return data.filter(({ name }) =>
+      name.toLowerCase().includes(lowerCaseFilter),
+    );
+  }, [data, filter]);
+
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  if (error) {
+    return <RtkOrDataServicesError error={error} />;
+  } else if (!data || !filteredPools) {
+    return (
+      <ErrorAlert dismissible={false}>
+        It looks like you do not have the required permissions to administer
+        compute resources.
+      </ErrorAlert>
+    );
+  }
+
+  // NOTE: This is unlikely to happen because a "default" resource pool should always be defined.
+  if (data.length === 0) {
+    return (
+      <InfoAlert dismissible={false} timeout={0}>
+        No resource pool set up yet. Please define at least a{" "}
+        <code>default</code> pool.
+      </InfoAlert>
+    );
+  }
+
+  return (
+    <>
+      <AdminListFilter filter={filter} onFilterChange={setFilter} />
+
+      {filteredPools.length === 0 ? (
+        <p className="fst-italic">
+          No resource pool matches the filter <code>{filter}</code>.
+        </p>
+      ) : (
+        <div className={cx("d-flex", "flex-column", "gap-3")}>
+          {filteredPools.map((pool) => (
+            <ResourcePoolItem key={pool.id} resourcePool={pool} />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+interface ResourcePoolItemProps {
+  // TODO: Cluster is not declared as being in the response
+  // check if it should be added to the API spec
+  resourcePool: ResourcePoolWithIdFiltered &
+    Pick<ResourcePoolWithId, "cluster">;
+}
+
+function ResourcePoolItem({ resourcePool }: ResourcePoolItemProps) {
+  const {
+    name,
+    default: isDefault,
+    public: isPublic,
+    quota,
+    cluster,
+    remote,
+  } = resourcePool;
+  const clusterId = cluster?.id;
+
+  const [isOpen, setIsOpen] = useState(false);
+  const toggle = useCallback(() => {
+    setIsOpen((isOpen) => !isOpen);
+  }, []);
+  const { data: usageLimits } = useGetResourcePoolsByResourcePoolIdLimitsQuery({
+    resourcePoolId: resourcePool.id,
+  });
+
+  return (
+    <Card>
+      <CardHeader
+        className={cx("bg-white", "border-0", "rounded", "fs-6", "p-0")}
+        tag="h5"
+      >
+        <button
+          className={cx(
+            "d-flex",
+            "gap-3",
+            "align-items-center",
+            "w-100",
+            "p-3",
+            "bg-transparent",
+            "border-0",
+            "fw-bold",
+          )}
+          onClick={toggle}
+          type="button"
+        >
+          {name}
+          {isDefault && <>{" (This is the default pool)"}</>}
+          <div className="ms-auto">
+            <ChevronFlippedIcon flipped={isOpen} />
+          </div>
+        </button>
+      </CardHeader>
+      <Collapse isOpen={isOpen}>
+        <CardBody className="pt-0">
+          <div className={cx("border-bottom", "border-top", "py-2")}>
+            <p className="mb-0">
+              {isPublic
+                ? "Public pool (everyone can use it)"
+                : "Private pool (requires special access)"}
+            </p>
+          </div>
+
+          <div className={cx("border-bottom", "py-2")}>
+            <ResourcePoolThresholds resourcePool={resourcePool} />
+          </div>
+
+          <div className={cx("border-bottom", "py-2")}>
+            {quota != null ? (
+              <div
+                className={cx(
+                  "align-items-center",
+                  "row",
+                  "row-cols-1",
+                  "row-cols-sm-4",
+                  "row-cols-md-5",
+                  "text-end",
+                )}
+              >
+                <div className={cx("col", "col-sm-12", "col-md", "text-start")}>
+                  Resource Quota:
+                </div>
+                <div className="col">{quota.cpu}&nbsp;CPUs</div>
+                <div className="col">{quota.memory}&nbsp;GB RAM</div>
+                <div className="col">{quota.gpu}&nbsp;GPUs</div>
+                <div className={cx("col", "ms-auto")}>
+                  <UpdateResourcePoolQuotaButton resourcePool={resourcePool} />
+                </div>
+              </div>
+            ) : (
+              <p className="mb-0">No quota</p>
+            )}
+          </div>
+          <div className={cx("border-bottom", "py-2")}>
+            <div
+              className={cx(
+                "align-items-center",
+                "row",
+                "row-cols-1",
+                "row-cols-sm-4",
+                "row-cols-md-5",
+                "text-end",
+              )}
+            >
+              <div className={cx("col", "col-sm-12", "col-md", "text-start")}>
+                Usage Quota:
+              </div>
+              {usageLimits != null && (
+                <div className="col">
+                  {usageLimits.user_limit} credits / user
+                </div>
+              )}
+              {usageLimits != null && (
+                <div className="col">
+                  {usageLimits.total_limit} credits total
+                </div>
+              )}
+              <div className={cx("col", "ms-auto")}>
+                <UpdateResourcePoolUsageLimitsButton
+                  resourcePool={resourcePool}
+                />
+              </div>
+            </div>
+          </div>
+          <div className={cx("border-bottom", "py-2")}>
+            {clusterId != null ? (
+              <p className="mb-0">
+                Remote cluster: <code>{clusterId}</code>
+              </p>
+            ) : (
+              <p className="mb-0">No remote cluster</p>
+            )}
+          </div>
+
+          <div className={cx("border-bottom", "py-2")}>
+            {remote != null ? (
+              <div
+                className={cx(
+                  "align-items-center",
+                  "row",
+                  "row-cols-1",
+                  "row-cols-sm-2",
+                )}
+              >
+                <div className={cx("col", "col-sm-10")}>
+                  Remote configuration: <code>{JSON.stringify(remote)}</code>
+                </div>
+                <div className={cx("col", "col-sm-2", "ms-auto", "text-end")}>
+                  <UpdateResourcePoolRemoteButton resourcePool={resourcePool} />
+                </div>
+              </div>
+            ) : (
+              <div
+                className={cx(
+                  "align-items-center",
+                  "row",
+                  "row-cols-1",
+                  "row-cols-sm-2",
+                )}
+              >
+                <div className={cx("col", "col-sm-10")}>
+                  Local resource pool
+                </div>
+                <div className={cx("col", "col-sm-2", "ms-auto", "text-end")}>
+                  <UpdateResourcePoolRemoteButton resourcePool={resourcePool} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className={cx("border-bottom", "py-2")}>
+            <ResourceClassList
+              classes={resourcePool.classes}
+              resourcePool={resourcePool}
+            />
+          </div>
+
+          {!isPublic && (
+            <div className={cx("border-bottom", "py-2")}>
+              <ResourcePoolMembers resourcePool={resourcePool} />
+            </div>
+          )}
+        </CardBody>
+        <CardBody
+          className={cx("d-flex", "flex-row", "justify-content-end", "pt-0")}
+        >
+          <DeleteResourcePoolButton resourcePool={resourcePool} />
+        </CardBody>
+      </Collapse>
+    </Card>
+  );
+}
+
+function ResourcePoolThresholds({ resourcePool }: ResourcePoolItemProps) {
+  const {
+    idle_threshold: idleThreshold,
+    hibernation_threshold: hibernationThreshold,
+  } = resourcePool;
+
+  const { params } = useContext(AppContext);
+  const cullingThresholds =
+    params?.CULLING_THRESHOLDS ?? DEFAULT_APP_PARAMS["CULLING_THRESHOLDS"];
+
+  return (
+    <div
+      className={cx(
+        "align-items-center",
+        "row",
+        "row-cols-1",
+        "row-cols-sm-3",
+        "row-cols-lg-4",
+        "text-end",
+      )}
+    >
+      <div className={cx("col", "col-sm-12", "text-start")}>
+        Session thresholds:
+      </div>
+      <div className="col">
+        Hibernate after{" "}
+        <span className="text-nowrap">
+          {idleThreshold
+            ? toFullHumanDuration(idleThreshold)
+            : cullingThresholds.registered.idle
+              ? toFullHumanDuration(cullingThresholds.registered.idle)
+              : "unknown"}
+        </span>
+      </div>
+      <div className="col">
+        Delete after{" "}
+        <span className="text-nowrap">
+          {hibernationThreshold
+            ? toFullHumanDuration(hibernationThreshold)
+            : cullingThresholds.registered.hibernation
+              ? toFullHumanDuration(cullingThresholds.registered.hibernation)
+              : "unknown"}
+        </span>
+      </div>
+      <div className={cx("col", "ms-auto")}>
+        <UpdateResourcePoolThresholdsButton resourcePool={resourcePool} />
+      </div>
+    </div>
+  );
+}
+
+interface ResourceClassListProps {
+  classes: ResourceClassWithId[];
+  resourcePool: ResourcePoolWithId;
+}
+
+function ResourceClassList({ classes, resourcePool }: ResourceClassListProps) {
+  return (
+    <>
+      <p className="mb-0">Classes:</p>
+      <div>
+        <AddResourceClassButton resourcePool={resourcePool} />
+      </div>
+      <ul className={cx("mt-2", "mb-0", "vstack", "gap-3")}>
+        {classes.map((resourceClass) => (
+          <ResourceClassItem
+            key={resourceClass.id}
+            resourceClass={resourceClass}
+            resourcePool={resourcePool}
+          />
+        ))}
+      </ul>
+    </>
+  );
+}
+
+interface ResourceClassFlavorNameProps {
+  resourceFlavorId: string | undefined;
+}
+
+function ResourceClassFlavorName({
+  resourceFlavorId,
+}: ResourceClassFlavorNameProps) {
+  const { data: resourceFlavors } = useGetResourceFlavorsQuery(
+    {},
+    { skip: resourceFlavorId == null },
+  );
+
+  if (resourceFlavorId == null) {
+    return (
+      <span className="text-muted">
+        <Tags className={cx("bi", "me-1")} />
+        no flavor
+      </span>
+    );
+  }
+
+  const resourceFlavor = resourceFlavors?.find(
+    ({ id }) => id === resourceFlavorId,
+  );
+  return (
+    <span title="Resource flavor">
+      <Tags className={cx("bi", "me-1")} />
+      {resourceFlavor?.name ?? resourceFlavorId}
+    </span>
+  );
+}
+
+interface ResourceClassItemProps {
+  resourceClass: ResourceClassWithId;
+  resourcePool: ResourcePoolWithId;
+}
+
+function ResourceClassItem({
+  resourceClass,
+  resourcePool,
+}: ResourceClassItemProps) {
+  const {
+    cpu,
+    default: isDefault,
+    default_storage,
+    gpu,
+    max_storage,
+    memory,
+    name,
+    node_affinities,
+    tolerations,
+  } = resourceClass;
+
+  const columnClasses = ["col-12", "col-sm-4", "col-md-3", "col-xl-2"];
+  const requiresIntegerCpu = poolRequiresIntegerCpu(resourcePool.remote);
+
+  return (
+    <li>
+      <div className={cx("align-items-center", "row", "text-end")}>
+        <div className={cx(columnClasses, "text-start")}>
+          <strong>{name}</strong>
+          {isDefault && " (default)"}:
+        </div>
+        <div className={cx(columnClasses)}>{cpu}&nbsp;CPUs</div>
+        <div className={cx(columnClasses)}>{memory}&nbsp;GB RAM</div>
+        <div className={cx(columnClasses)}>{gpu}&nbsp;GPUs</div>
+        <div className={cx(columnClasses)}>
+          {default_storage}&nbsp;GB default disk
+        </div>
+        <div className={cx(columnClasses)}>{max_storage}&nbsp;GB max disk</div>
+        <div className={cx(columnClasses)}>
+          tolerations: {tolerations?.length ?? 0}
+        </div>
+        <div className={cx(columnClasses)}>
+          node affinities: {node_affinities?.length ?? 0}
+        </div>
+        <div className={cx(columnClasses)}>
+          <ResourceClassFlavorName
+            resourceFlavorId={resourceClass.resource_flavor_id}
+          />
+        </div>
+        {requiresIntegerCpu && (
+          <>
+            <div className={cx(columnClasses)}>
+              system: {resourceClass.remote?.system_name ?? "—"}
+            </div>
+            <div className={cx(columnClasses)}>
+              partition: {resourceClass.remote?.partition ?? "—"}
+            </div>
+            <div className={cx(columnClasses)}>
+              forward resources:{" "}
+              {resourceClass.remote?.forward_resource_values ? "yes" : "no"}
+            </div>
+          </>
+        )}
+        <div
+          className={cx(
+            columnClasses,
+            "ms-auto",
+            "d-flex",
+            "flex-column",
+            "flex-sm-row",
+            "flex-wrap",
+            "justify-content-end",
+          )}
+        >
+          <UpdateResourceClassCostButton
+            resourceClass={resourceClass}
+            resourcePool={resourcePool}
+          />
+        </div>
+        <div
+          className={cx(
+            "col-12",
+            "col-sm-8",
+            "col-md-6",
+            "col-xl-4",
+            "ms-auto",
+            "d-flex",
+            "flex-column",
+            "flex-sm-row",
+            "flex-wrap",
+            "justify-content-end",
+          )}
+        >
+          {isDefault ? (
+            <UpdateResourceClassButton
+              resourceClass={resourceClass}
+              resourcePool={resourcePool}
+            />
+          ) : (
+            <>
+              <UpdateResourceClassButton
+                resourceClass={resourceClass}
+                resourcePool={resourcePool}
+              />
+              <span className={cx("me-2", "py-1")} />
+              <DeleteResourceClassButton
+                resourceClass={resourceClass}
+                resourcePool={resourcePool}
+              />
+            </>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function ResourcePoolMembers({ resourcePool }: ResourcePoolItemProps) {
+  const { id } = resourcePool;
+
+  const {
+    data: resourcePoolMembers,
+    error: resourcePoolMembersError,
+    isLoading: resourcePoolMembersIsLoading,
+  } = useGetResourcePoolsByResourcePoolIdMembersQuery({ resourcePoolId: id });
+
+  const isLoading = resourcePoolMembersIsLoading;
+  const error = resourcePoolMembersError;
+
+  if (isLoading) {
+    return (
+      <div>
+        <Loader className="me-1" inline size={16} />
+        Loading members...
+      </div>
+    );
+  }
+
+  if (error || !resourcePoolMembers) {
+    return <RtkOrDataServicesError error={error} />;
+  }
+
+  return (
+    <div>
+      <p className="mb-0">Members: {resourcePoolMembers.length}</p>
+      <div className={cx("d-flex", "flex-column", "flex-sm-row", "flex-wrap")}>
+        <AddMemberToResourcePoolButton resourcePool={resourcePool} />
+      </div>
+      <ResourcePoolMembersList
+        resourcePool={resourcePool}
+        resourcePoolMembers={resourcePoolMembers}
+      />
+    </div>
+  );
+}
+
+interface ResourcePoolMembersListProps {
+  resourcePool: ResourcePoolWithId;
+  resourcePoolMembers: PoolMemberResponse[];
+}
+
+function ResourcePoolMembersList({
+  resourcePool,
+  resourcePoolMembers,
+}: ResourcePoolMembersListProps) {
+  return (
+    <ul className={cx("mt-2", "mb-0", "vstack", "gap-2")}>
+      {resourcePoolMembers.map((member) => (
+        <ResourcePoolMemberItem
+          key={`${member.member_type}-${member.id}`}
+          resourcePool={resourcePool}
+          resourcePoolMember={member}
+        />
+      ))}
+    </ul>
+  );
+}
+
+interface ResourcePoolMemberItemProps {
+  resourcePool: ResourcePoolWithId;
+  resourcePoolMember: PoolMemberResponse;
+}
+
+function ResourcePoolMemberItem({
+  resourcePool,
+  resourcePoolMember,
+}: ResourcePoolMemberItemProps) {
+  const resolved = useResolveResourcePoolMember(resourcePoolMember);
+
+  if (resolved.isLoading) {
+    return (
+      <li>
+        <Loader className="me-1" inline size={16} />
+        <span className="fst-italic">
+          loading member {resourcePoolMember.id}
+        </span>
+      </li>
+    );
+  }
+
+  if (resolved.error || resolved.label == null) {
+    return <li>Error loading member {resourcePoolMember.id}</li>;
+  }
+
+  return (
+    <li>
+      <div className={cx("hstack", "gap-3")}>
+        <div className={cx("d-flex", "align-items-center")}>
+          {resourcePoolMember.member_type === "user" ? (
+            <PersonFill className={cx("bi", "me-1")} />
+          ) : resourcePoolMember.member_type === "group" ? (
+            <PeopleFill className={cx("bi", "me-1")} />
+          ) : (
+            <FolderFill className={cx("bi", "me-1")} />
+          )}
+          <div>{resolved.label}</div>
+        </div>
+        <div>
+          <RemoveMemberFromResourcePoolButton
+            resourcePool={resourcePool}
+            resourcePoolMember={resourcePoolMember}
+            label={resolved.label}
+          />
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function useResolveResourcePoolMember(member: PoolMemberResponse) {
+  const realm = useKeycloakRealm();
+
+  const {
+    data: keycloakUser,
+    error,
+    isLoading,
+  } = useGetKeycloakUserQuery(
+    {
+      realm,
+      userId: member.id,
+    },
+    { skip: member.member_type !== "user" },
+  );
+
+  switch (member.member_type) {
+    case "user": {
+      const label =
+        keycloakUser != null
+          ? `${keycloakUser.firstName} ${keycloakUser.lastName} <${keycloakUser.email}>`
+          : (member.email ?? member.id);
+
+      return {
+        isLoading,
+        error,
+        label,
+      };
+    }
+    case "group": {
+      return {
+        isLoading: false,
+        error: undefined,
+        label: `${member.name} (${member.slug})`,
+      };
+    }
+    case "project": {
+      return {
+        isLoading: false,
+        error: undefined,
+        label: `${member.name} (${member.namespace})`,
+      };
+    }
+  }
+}
+
+interface RemoveMemberFromResourcePoolButtonProps {
+  resourcePool: ResourcePoolWithId;
+  resourcePoolMember: PoolMemberResponse;
+  label: string;
+}
+
+function RemoveMemberFromResourcePoolButton({
+  resourcePool,
+  resourcePoolMember,
+  label,
+}: RemoveMemberFromResourcePoolButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const toggle = useCallback(() => {
+    setIsOpen((open) => !open);
+  }, []);
+
+  return (
+    <>
+      <Button className="btn-sm" color="outline-danger" onClick={toggle}>
+        <PersonFillX className={cx("bi", "me-1")} />
+        Remove
+      </Button>
+      <RemoveMemberFromResourcePoolModal
+        isOpen={isOpen}
+        label={label}
+        resourcePool={resourcePool}
+        resourcePoolMember={resourcePoolMember}
+        toggle={toggle}
+      />
+    </>
+  );
+}
+
+interface RemoveMemberFromResourcePoolModalProps {
+  isOpen: boolean;
+  label: string;
+  resourcePool: ResourcePoolWithId;
+  resourcePoolMember: PoolMemberResponse;
+  toggle: () => void;
+}
+
+function RemoveMemberFromResourcePoolModal({
+  isOpen,
+  label,
+  resourcePool,
+  resourcePoolMember,
+  toggle,
+}: RemoveMemberFromResourcePoolModalProps) {
+  const [removeMemberFromResourcePool, result] =
+    useDeleteResourcePoolsByResourcePoolIdMembersAndMemberTypeMemberIdMutation();
+  const onRemove = useCallback(() => {
+    removeMemberFromResourcePool({
+      resourcePoolId: resourcePool.id,
+      memberType: resourcePoolMember.member_type,
+      memberId: resourcePoolMember.id,
+    });
+  }, [
+    removeMemberFromResourcePool,
+    resourcePool.id,
+    resourcePoolMember.id,
+    resourcePoolMember.member_type,
+  ]);
+
+  useEffect(() => {
+    if (result.isSuccess || result.isError) {
+      toggle();
+    }
+  }, [result.isError, result.isSuccess, toggle]);
+
+  return (
+    <Modal centered isOpen={isOpen} size="lg" toggle={toggle}>
+      <ModalBody>
+        <h3 className={cx("fs-6", "lh-base", "text-danger", "fw-bold")}>
+          Are you sure?
+        </h3>
+        <p className="mb-0">
+          Please confirm that you want to remove <strong>{label}</strong> from
+          the <strong>{resourcePool.name}</strong> resource pool.
+        </p>
+      </ModalBody>
+      <ModalFooter className="pt-0">
+        <Button className="ms-2" color="outline-rk-green" onClick={toggle}>
+          <XLg className={cx("bi", "me-1")} />
+          Cancel
+        </Button>
+        <Button className="ms-2" color="danger" onClick={onRemove}>
+          {result.isLoading ? (
+            <Loader className="me-1" inline size={16} />
+          ) : (
+            <CheckLg className={cx("bi", "me-1")} />
+          )}
+          Yes, remove member
+        </Button>
+      </ModalFooter>
+    </Modal>
+  );
+}
+
+interface DeleteResourcePoolButtonProps {
+  resourcePool: ResourcePoolWithId;
+}
+
+function DeleteResourcePoolButton({
+  resourcePool,
+}: DeleteResourcePoolButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const toggle = useCallback(() => {
+    setIsOpen((open) => !open);
+  }, []);
+
+  return (
+    <>
+      <Button
+        className="ms-2"
+        color="outline-danger"
+        disabled={resourcePool.default}
+        onClick={toggle}
+      >
+        <TrashFill className={cx("bi", "me-1")} />
+        Delete resource pool
+        {resourcePool.default && " (The default pool cannot be deleted)"}
+      </Button>
+      <DeleteResourcePoolModal
+        isOpen={isOpen}
+        resourcePool={resourcePool}
+        toggle={toggle}
+      />
+    </>
+  );
+}
+
+interface DeleteResourcePoolModalProps {
+  isOpen: boolean;
+  resourcePool: ResourcePoolWithId;
+  toggle: () => void;
+}
+
+function DeleteResourcePoolModal({
+  isOpen,
+  resourcePool,
+  toggle,
+}: DeleteResourcePoolModalProps) {
+  const { id, name } = resourcePool;
+
+  const [deleteResourcePool, result] =
+    useDeleteResourcePoolsByResourcePoolIdMutation();
+  const onDelete = useCallback(() => {
+    deleteResourcePool({ resourcePoolId: id });
+  }, [deleteResourcePool, id]);
+
+  useEffect(() => {
+    if (result.isSuccess || result.isError) {
+      toggle();
+    }
+  }, [result.isError, result.isSuccess, toggle]);
+
+  return (
+    <Modal backdrop="static" centered isOpen={isOpen} size="lg" toggle={toggle}>
+      <ModalBody>
+        <h3 className={cx("fs-6", "lh-base", "text-danger", "fw-bold")}>
+          Are you sure?
+        </h3>
+        <p className="mb-0">
+          Please confirm that you want to delete the <strong>{name}</strong>{" "}
+          resource pool.
+        </p>
+      </ModalBody>
+      <ModalFooter className="pt-0">
+        <Button className="ms-2" color="outline-danger" onClick={toggle}>
+          <XLg className={cx("bi", "me-1")} />
+          Cancel, keep resource pool
+        </Button>
+        <Button className="ms-2" color="danger" onClick={onDelete}>
+          {result.isLoading ? (
+            <Loader className="me-1" inline size={16} />
+          ) : (
+            <CheckLg className={cx("bi", "me-1")} />
+          )}
+          Yes, delete this resource pool
+        </Button>
+      </ModalFooter>
+    </Modal>
+  );
+}

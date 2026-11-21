@@ -37,7 +37,8 @@ function newDocsBase({ language, version }: NewDocLinkArgs): string {
 }
 
 function newDocsLinkPage(page: string): NewDocLinkFn {
-  const page_ = page.startsWith("/") ? page.substring(1) : page;
+  const page1 = page.startsWith("/") ? page.substring(1) : page;
+  const page_ = page1.endsWith("/") || page1 === "" ? page1 : page1 + "/";
   return (args: NewDocLinkArgs) => newDocsBase(args) + page_;
 }
 
@@ -86,6 +87,10 @@ export const NEW_DOCS_CREATE_ENV_CUSTOM_PACKAGES_INSTALLED = newDocsLinkPage(
   "docs/users/compute/environment/guides/create-environment-with-custom-packages-installed",
 )(DEFAULT_NEW_DOC_LINK_ARGS);
 
+export const NEW_DOCS_RESOURCE_POOLS_AND_CLASSES = newDocsLinkPage(
+  "docs/users/compute/resource-pools-and-classes",
+)(DEFAULT_NEW_DOC_LINK_ARGS);
+
 export const NEW_DOCS_HOW_RENKU_WORKS = newDocsLinkPage(
   "docs/users/knowledge-base/about",
 )(DEFAULT_NEW_DOC_LINK_ARGS);
@@ -108,4 +113,20 @@ export const NEW_DOCS_RENKU_EVENTS = newDocsLinkPage(
 
 export const NEW_DOCS_MARKDOWN_SYNTAX = newDocsLinkPage(
   "docs/users/knowledge-base/writing-documentation-in-renku",
+)(DEFAULT_NEW_DOC_LINK_ARGS);
+
+export const NEW_DOCS_ADMIN_OPERATIONS_RPS = newDocsLinkPage(
+  "docs/admins/operation/rps",
+)(DEFAULT_NEW_DOC_LINK_ARGS);
+
+export const NEW_DOCS_ADMIN_INTEGRATIONS = newDocsLinkPage(
+  "docs/admins/operation/integrations",
+)(DEFAULT_NEW_DOC_LINK_ARGS);
+
+export const NEW_DOCS_ADMIN_SESSION_ENVIRONMENTS = newDocsLinkPage(
+  "docs/admins/operation/global-environments",
+)(DEFAULT_NEW_DOC_LINK_ARGS);
+
+export const NEW_DOCS_USER_PROJECT_STORAGE = newDocsLinkPage(
+  "docs/users/data/project-storage",
 )(DEFAULT_NEW_DOC_LINK_ARGS);

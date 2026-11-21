@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-import fetch from "cross-fetch";
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 
@@ -142,13 +141,13 @@ function registerApiRoutes(app: express.Application, prefix: string): void {
     [uploadFileMiddleware],
     proxyMiddleware,
   );
-  app.delete(prefix + "/*", proxyMiddleware);
-  app.get(prefix + "/*", proxyMiddleware);
-  app.head(prefix + "/*", proxyMiddleware);
-  app.options(prefix + "/*", proxyMiddleware);
-  app.patch(prefix + "/*", proxyMiddleware);
-  app.post(prefix + "/*", proxyMiddleware);
-  app.put(prefix + "/*", proxyMiddleware);
+  app.delete(prefix + "/*path", proxyMiddleware);
+  app.get(prefix + "/*path", proxyMiddleware);
+  app.head(prefix + "/*path", proxyMiddleware);
+  app.options(prefix + "/*path", proxyMiddleware);
+  app.patch(prefix + "/*path", proxyMiddleware);
+  app.post(prefix + "/*path", proxyMiddleware);
+  app.put(prefix + "/*path", proxyMiddleware);
 }
 
 export default registerApiRoutes;

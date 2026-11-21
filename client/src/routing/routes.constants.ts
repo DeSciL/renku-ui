@@ -29,7 +29,14 @@ export const ABSOLUTE_ROUTES = {
   v1: { splat: "/v1/*" },
   v2: {
     index: "/",
-    admin: "/admin",
+    admin: {
+      root: "/admin",
+      computeResources: "/admin/compute-resources",
+      integrations: "/admin/integrations",
+      sessionEnvironments: "/admin/session-environments",
+      projectStorage: "/admin/project-storage",
+      maintenance: "/admin/maintenance",
+    },
     dataConnectors: {
       root: "/d/:slug",
       show: {
@@ -58,6 +65,7 @@ export const ABSOLUTE_ROUTES = {
       root: "/integrations",
       complete: "/integrations/complete",
     },
+    ssh_keys: "/ssh_keys",
     projects: {
       show: {
         root: "/p/:namespace/:slug",
@@ -77,6 +85,9 @@ export const ABSOLUTE_ROUTES = {
     },
     search: "/search",
     secrets: "/secrets",
+    sessions: {
+      show: "/s/:id",
+    },
     user: "/user",
     users: {
       show: {
@@ -100,7 +111,14 @@ export const RELATIVE_ROUTES = {
   v1: { splat: "v1/*" },
   v2: {
     index: "/",
-    admin: "admin",
+    admin: {
+      root: "admin",
+      computeResources: "compute-resources",
+      integrations: "integrations",
+      sessionEnvironments: "session-environments",
+      projectStorage: "project-storage",
+      maintenance: "maintenance",
+    },
     betaRoot: "/v2/*",
     dataConnectors: {
       root: "d",
@@ -128,6 +146,7 @@ export const RELATIVE_ROUTES = {
       root: "integrations",
       complete: "complete",
     },
+    ssh_keys: "ssh_keys",
     projects: {
       root: "p/*",
       show: {
@@ -147,6 +166,10 @@ export const RELATIVE_ROUTES = {
     },
     search: "search",
     secrets: "secrets",
+    sessions: {
+      root: "s",
+      show: ":id",
+    },
     user: "user",
     users: {
       root: "u",

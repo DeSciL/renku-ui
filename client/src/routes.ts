@@ -79,8 +79,33 @@ export default [
     // Not found page for /d/*
     route("*", "routes/dataConnectors/catchall.tsx"),
   ]),
-  // Admin page
-  route(RELATIVE_ROUTES.v2.admin, "routes/admin.tsx"),
+  // Session pages
+  ...prefix(RELATIVE_ROUTES.v2.sessions.root, [
+    route(RELATIVE_ROUTES.v2.sessions.show, "routes/sessions/redirect.tsx"),
+  ]),
+  // Admin pages
+  route(RELATIVE_ROUTES.v2.admin.root, "routes/admin/root.tsx", [
+    index("routes/admin/index.tsx"),
+    route(
+      RELATIVE_ROUTES.v2.admin.computeResources,
+      "routes/admin/computeResources.tsx",
+    ),
+    route(
+      RELATIVE_ROUTES.v2.admin.integrations,
+      "routes/admin/integrations.tsx",
+    ),
+    route(
+      RELATIVE_ROUTES.v2.admin.sessionEnvironments,
+      "routes/admin/sessionEnvironments.tsx",
+    ),
+    route(
+      RELATIVE_ROUTES.v2.admin.projectStorage,
+      "routes/admin/projectStorage.tsx",
+    ),
+    route(RELATIVE_ROUTES.v2.admin.maintenance, "routes/admin/maintenance.tsx"),
+  ]),
+  // SSH keys page
+  route(RELATIVE_ROUTES.v2.ssh_keys, "routes/sshKeys.tsx"),
   // Legacy projects (may redirect)
   route(RELATIVE_ROUTES.projects.splat, "routes/legacy/projects.tsx"),
   // Legacy datasets
